@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Skintel Web — Admin Panel</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --pink:#ec4899;--pink-light:#fdf2f8;--pink-dark:#be185d;
+  --green:#22c55e;--green-light:#f0fdf4;
+  --yellow:#eab308;--yellow-light:#fefce8;
+  --red:#ef4444;--red-light:#fef2f2;
+  --blue:#3b82f6;--blue-light:#eff6ff;
+  --gray-50:#f9fafb;--gray-100:#f3f4f6;--gray-200:#e5e7eb;
+  --gray-400:#9ca3af;--gray-600:#4b5563;--gray-900:#111827;
+  --sidebar:220px;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--gray-50);color:var(--gray-900);display:flex;min-height:100vh}
+
+/* SIDEBAR */
+.sidebar{width:var(--sidebar);background:#fff;border-right:1px solid var(--gray-200);display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:10}
+.logo{padding:20px;border-bottom:1px solid var(--gray-100)}
+.logo h1{font-size:20px;font-weight:900;background:linear-gradient(135deg,var(--pink),#a855f7);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.logo p{font-size:11px;color:var(--gray-400);margin-top:2px}
+.nav{flex:1;padding:10px 8px;overflow-y:auto}
+.nav-group{margin-bottom:16px}
+.nav-group-label{font-size:10px;font-weight:700;color:var(--gray-400);text-transform:uppercase;letter-spacing:.08em;padding:0 12px;margin-bottom:4px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:10px;cursor:pointer;font-size:13.5px;font-weight:500;color:var(--gray-600);margin-bottom:1px;transition:all .15s;border:none;background:none;width:100%;text-align:left}
+.nav-item:hover{background:var(--gray-50)}
+.nav-item.active{background:var(--pink-light);color:var(--pink);font-weight:700}
+.nav-item .icon{font-size:16px;width:22px;text-align:center}
+.sidebar-footer{padding:14px 20px;border-top:1px solid var(--gray-100);font-size:11px;color:var(--gray-400)}
+
+/* MAIN */
+.main{margin-left:var(--sidebar);flex:1;display:flex;flex-direction:column;min-height:100vh}
+.topbar{background:#fff;border-bottom:1px solid var(--gray-200);padding:0 28px;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:5}
+.topbar h2{font-size:17px;font-weight:700;color:var(--gray-900)}
+.topbar p{font-size:12px;color:var(--gray-400);margin-top:1px}
+.content{padding:24px 28px;flex:1}
+
+/* CARDS */
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
+.stat-card{background:#fff;border-radius:16px;padding:20px;border:1px solid var(--gray-200);display:flex;align-items:center;gap:14px}
+.stat-icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+.stat-val{font-size:26px;font-weight:900;line-height:1}
+.stat-label{font-size:12px;color:var(--gray-400);margin-top:3px}
+
+/* TABLE */
+.table-card{background:#fff;border-radius:16px;border:1px solid var(--gray-200);overflow:hidden;margin-bottom:20px}
+.table-header{padding:16px 20px;border-bottom:1px solid var(--gray-100);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.table-header h3{font-size:15px;font-weight:700}
+.search-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+input[type=text],input[type=number],textarea,select{border:1px solid var(--gray-200);border-radius:10px;padding:8px 12px;font-size:13px;outline:none;font-family:inherit;background:#fff;color:var(--gray-900);transition:border .15s}
+input:focus,textarea:focus,select:focus{border-color:var(--pink)}
+.search-input{width:220px}
+table{width:100%;border-collapse:collapse}
+th{text-align:left;font-size:11px;font-weight:700;color:var(--gray-400);text-transform:uppercase;letter-spacing:.06em;padding:10px 16px;border-bottom:1px solid var(--gray-100);background:var(--gray-50)}
+td{padding:12px 16px;font-size:13.5px;border-bottom:1px solid var(--gray-50);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--gray-50)}
+
+/* BADGES */
+.badge{display:inline-flex;align-items:center;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:700;white-space:nowrap}
+.badge-safe{background:var(--green-light);color:#15803d}
+.badge-caution{background:var(--yellow-light);color:#a16207}
+.badge-avoid{background:var(--red-light);color:#b91c1c}
+.badge-authentic{background:var(--green-light);color:#15803d}
+.badge-flagged{background:var(--yellow-light);color:#a16207}
+.badge-counterfeit{background:var(--red-light);color:#b91c1c}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .15s;font-family:inherit}
+.btn-primary{background:var(--pink);color:#fff}
+.btn-primary:hover{background:var(--pink-dark)}
+.btn-outline{background:#fff;color:var(--gray-600);border:1px solid var(--gray-200)}
+.btn-outline:hover{background:var(--gray-50)}
+.btn-danger{background:var(--red-light);color:var(--red)}
+.btn-danger:hover{background:#fee2e2}
+.btn-sm{padding:5px 10px;font-size:12px;border-radius:8px}
+.btn-icon{width:30px;height:30px;padding:0;justify-content:center}
+.filter-btn{padding:6px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid var(--gray-200);background:#fff;color:var(--gray-600);transition:all .15s}
+.filter-btn.active{background:var(--pink);color:#fff;border-color:var(--pink)}
+
+/* MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100;align-items:center;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal{background:#fff;border-radius:20px;width:560px;max-width:95vw;max-height:90vh;overflow-y:auto;box-shadow:0 25px 50px rgba(0,0,0,.15)}
+.modal-head{padding:20px 24px 16px;border-bottom:1px solid var(--gray-100);display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:#fff;z-index:1}
+.modal-head h3{font-size:16px;font-weight:700}
+.modal-close{width:32px;height:32px;border-radius:8px;border:none;background:var(--gray-100);cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center}
+.modal-body{padding:20px 24px}
+.form-group{margin-bottom:14px}
+.form-group label{display:block;font-size:12px;font-weight:700;color:var(--gray-600);margin-bottom:5px;text-transform:uppercase;letter-spacing:.04em}
+.form-group input,.form-group select,.form-group textarea{width:100%}
+.form-group textarea{resize:vertical;min-height:80px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.modal-foot{padding:16px 24px;border-top:1px solid var(--gray-100);display:flex;justify-content:flex-end;gap:8px;position:sticky;bottom:0;background:#fff}
+
+/* TOAST */
+.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:var(--gray-900);color:#fff;padding:10px 20px;border-radius:99px;font-size:13px;font-weight:500;z-index:999;opacity:0;transition:opacity .2s;pointer-events:none;white-space:nowrap}
+.toast.show{opacity:1}
+
+/* DASHBOARD */
+.dash-grid{display:grid;grid-template-columns:2fr 1fr;gap:20px;margin-bottom:20px}
+.api-box{background:var(--gray-900);border-radius:16px;padding:20px}
+.api-box h4{color:#fff;font-size:13px;font-weight:700;margin-bottom:12px;opacity:.7;text-transform:uppercase;letter-spacing:.06em}
+.api-route{font-family:'Courier New',monospace;font-size:12px;color:#a78bfa;margin-bottom:6px;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.05)}
+.api-route:last-child{border:none}
+.brand-mini{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--gray-100)}
+.brand-mini:last-child{border:none}
+
+/* EMPTY STATE */
+.empty{text-align:center;padding:60px 20px;color:var(--gray-400)}
+.empty .icon{font-size:48px;margin-bottom:12px}
+.empty p{font-size:14px}
+
+/* PAGE SECTIONS */
+.page{display:none}.page.active{display:block}
+
+/* VALIDATE PANEL */
+.validate-result{background:var(--gray-50);border-radius:14px;padding:16px;margin-top:16px;border:1px solid var(--gray-200)}
+.check-row{display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid var(--gray-100);font-size:13px}
+.check-row:last-child{border:none}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <div class="logo">
+    <h1>✦ Skintel Web</h1>
+    <p>Admin Panel — ASP.NET C#</p>
+  </div>
+  <div class="nav">
+    <div class="nav-group">
+      <div class="nav-group-label">Overview</div>
+      <button class="nav-item active" onclick="navigate('dashboard')"><span class="icon">🏠</span> Dashboard</button>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-label">Management</div>
+      <button class="nav-item" onclick="navigate('ingredients')"><span class="icon">🧪</span> Ingredients</button>
+      <button class="nav-item" onclick="navigate('brands')"><span class="icon">🏷️</span> Brand Registry</button>
+      <button class="nav-item" onclick="navigate('products')"><span class="icon">🧴</span> Products</button>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-label">Tools</div>
+      <button class="nav-item" onclick="navigate('validate')"><span class="icon">🔍</span> Validate Brand</button>
+    </div>
+  </div>
+  <div class="sidebar-footer">Skintel v1.0 · SQLite · ASP.NET 8</div>
+</nav>
+
+<!-- MAIN -->
+<main class="main">
+  <div class="topbar">
+    <div><h2 id="page-title">Dashboard</h2><p id="page-sub">System overview</p></div>
+    <button class="btn btn-primary" onclick="openAddModal()">＋ Add New</button>
+  </div>
+  <div class="content">
+
+    <!-- DASHBOARD -->
+    <div class="page active" id="page-dashboard">
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon" style="background:var(--pink-light)">🧪</div>
+          <div><div class="stat-val" id="ds-ingredients">—</div><div class="stat-label">Ingredients</div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:var(--blue-light)">🏷️</div>
+          <div><div class="stat-val" id="ds-brands">—</div><div class="stat-label">Brands</div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:var(--green-light)">🧴</div>
+          <div><div class="stat-val" id="ds-products">—</div><div class="stat-label">Products</div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:var(--red-light)">⚠️</div>
+          <div><div class="stat-val" id="ds-flagged">—</div><div class="stat-label">Flagged</div></div>
+        </div>
+      </div>
+
+      <div class="dash-grid">
+        <div class="table-card">
+          <div class="table-header"><h3>🏷️ Registered Brands</h3></div>
+          <div style="padding:4px 0" id="dash-brands-list"></div>
+        </div>
+        <div class="api-box">
+          <h4>API Endpoints</h4>
+          <div class="api-route">GET /api/ingredients</div>
+          <div class="api-route">GET /api/ingredients/stats</div>
+          <div class="api-route">GET /api/brands</div>
+          <div class="api-route">GET /api/brands/validate</div>
+          <div class="api-route">GET /api/products</div>
+          <div class="api-route">GET /api/products/barcode/{code}</div>
+          <div class="api-route">GET /api/products/stats</div>
+          <div class="api-route">POST /api/ingredients</div>
+          <div class="api-route">POST /api/brands</div>
+          <div class="api-route">POST /api/products</div>
+          <div class="api-route">PUT /api/{resource}/{id}</div>
+          <div class="api-route">DELETE /api/{resource}/{id}</div>
+        </div>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon" style="background:var(--green-light)">✅</div>
+          <div><div class="stat-val" id="ds-safe">—</div><div class="stat-label">Safe Ingredients</div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:var(--yellow-light)">⚠️</div>
+          <div><div class="stat-val" id="ds-caution">—</div><div class="stat-label">Caution</div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:var(--red-light)">❌</div>
+          <div><div class="stat-val" id="ds-avoid">—</div><div class="stat-label">Avoid</div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:var(--green-light)">✔️</div>
+          <div><div class="stat-val" id="ds-authentic">—</div><div class="stat-label">Authentic Products</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- INGREDIENTS -->
+    <div class="page" id="page-ingredients">
+      <div class="table-card">
+        <div class="table-header">
+          <h3>🧪 Ingredient Database</h3>
+          <div class="search-row">
+            <input type="text" class="search-input" id="ing-search" placeholder="Search ingredients..." oninput="loadIngredients()"/>
+            <button class="filter-btn active" onclick="setIngFilter('',this)" id="f-ing-all">All</button>
+            <button class="filter-btn" onclick="setIngFilter('safe',this)">✅ Safe</button>
+            <button class="filter-btn" onclick="setIngFilter('caution',this)">⚠️ Caution</button>
+            <button class="filter-btn" onclick="setIngFilter('avoid',this)">❌ Avoid</button>
+          </div>
+        </div>
+        <table>
+          <thead><tr><th>Name</th><th>INCI Name</th><th>Function</th><th>Rating</th><th>Notes</th><th style="width:80px">Actions</th></tr></thead>
+          <tbody id="ing-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- BRANDS -->
+    <div class="page" id="page-brands">
+      <div class="table-card">
+        <div class="table-header">
+          <h3>🏷️ Brand Registry</h3>
+          <div class="search-row">
+            <input type="text" class="search-input" id="brand-search" placeholder="Search brands..." oninput="loadBrands()"/>
+          </div>
+        </div>
+        <table>
+          <thead><tr><th>Brand</th><th>Country</th><th>Distributor (PH)</th><th>Price Range (₱)</th><th>Barcode Prefixes</th><th style="width:80px">Actions</th></tr></thead>
+          <tbody id="brand-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- PRODUCTS -->
+    <div class="page" id="page-products">
+      <div class="table-card">
+        <div class="table-header">
+          <h3>🧴 Product Authenticity Panel</h3>
+          <div class="search-row">
+            <input type="text" class="search-input" id="prod-search" placeholder="Search by name, brand, barcode..." oninput="loadProducts()"/>
+            <button class="filter-btn active" onclick="setProdFilter('',this)">All</button>
+            <button class="filter-btn" onclick="setProdFilter('authentic',this)">✅ Authentic</button>
+            <button class="filter-btn" onclick="setProdFilter('flagged',this)">⚠️ Flagged</button>
+            <button class="filter-btn" onclick="setProdFilter('counterfeit',this)">❌ Counterfeit</button>
+          </div>
+        </div>
+        <table>
+          <thead><tr><th>Product</th><th>Brand</th><th>Barcode</th><th>Category</th><th>Safety</th><th>Status</th><th style="width:80px">Actions</th></tr></thead>
+          <tbody id="prod-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- VALIDATE -->
+    <div class="page" id="page-validate">
+      <div class="table-card" style="max-width:600px">
+        <div class="table-header"><h3>🔍 Brand Authenticity Validator</h3></div>
+        <div style="padding:20px">
+          <div class="form-group">
+            <label>Brand Name</label>
+            <input type="text" id="val-brand" placeholder="e.g. Cetaphil, CeraVe, NIVEA" style="width:100%"/>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Batch Code (optional)</label>
+              <input type="text" id="val-batch" placeholder="e.g. ABC12345"/>
+            </div>
+            <div class="form-group">
+              <label>Purchase Price ₱ (optional)</label>
+              <input type="text" id="val-price" placeholder="e.g. 350"/>
+            </div>
+          </div>
+          <button class="btn btn-primary" onclick="validateBrand()" style="width:100%">🔍 Validate Brand</button>
+          <div id="val-result"></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<!-- MODALS -->
+<!-- Ingredient Modal -->
+<div class="modal-overlay" id="modal-ing">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="ing-modal-title">Add Ingredient</h3>
+      <button class="modal-close" onclick="closeModal('modal-ing')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="ing-id"/>
+      <div class="form-group"><label>Name *</label><input type="text" id="ing-name" placeholder="e.g. Niacinamide"/></div>
+      <div class="form-group"><label>INCI Name</label><input type="text" id="ing-inci" placeholder="e.g. Niacinamide"/></div>
+      <div class="form-group"><label>Function</label><input type="text" id="ing-function" placeholder="e.g. Brightening, oil control"/></div>
+      <div class="form-group">
+        <label>Rating *</label>
+        <select id="ing-rating">
+          <option value="safe">✅ Safe</option>
+          <option value="caution">⚠️ Caution</option>
+          <option value="avoid">❌ Avoid</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Notes</label><textarea id="ing-notes" placeholder="Usage tips, restrictions, concentration limits..."></textarea></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-outline" onclick="closeModal('modal-ing')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveIngredient()">Save Ingredient</button>
+    </div>
+  </div>
+</div>
+
+<!-- Brand Modal -->
+<div class="modal-overlay" id="modal-brand">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="brand-modal-title">Add Brand</h3>
+      <button class="modal-close" onclick="closeModal('modal-brand')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="brand-id"/>
+      <div class="form-row">
+        <div class="form-group"><label>Brand Name *</label><input type="text" id="brand-name" placeholder="e.g. Cetaphil"/></div>
+        <div class="form-group"><label>Country</label><input type="text" id="brand-country" placeholder="e.g. USA"/></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Parent Company</label><input type="text" id="brand-parent" placeholder="e.g. Galderma"/></div>
+        <div class="form-group"><label>PH Distributor</label><input type="text" id="brand-dist" placeholder="e.g. Galderma Philippines"/></div>
+      </div>
+      <div class="form-group"><label>Official Website</label><input type="text" id="brand-website" placeholder="e.g. cetaphil.com"/></div>
+      <div class="form-group"><label>Batch Code Format</label><input type="text" id="brand-bcformat" placeholder="e.g. Alphanumeric 6-10 chars on bottom"/></div>
+      <div class="form-group"><label>Batch Code Regex</label><input type="text" id="brand-bcregex" placeholder="e.g. ^[A-Z]{1,3}[0-9]{4,7}$"/></div>
+      <div class="form-group"><label>Barcode Prefixes (comma-separated)</label><input type="text" id="brand-prefixes" placeholder="e.g. 305950,302994"/></div>
+      <div class="form-row">
+        <div class="form-group"><label>Min Price ₱</label><input type="number" id="brand-pmin" placeholder="350"/></div>
+        <div class="form-group"><label>Max Price ₱</label><input type="number" id="brand-pmax" placeholder="1200"/></div>
+      </div>
+      <div class="form-group"><label>Authorized Sellers (comma-separated)</label><input type="text" id="brand-sellers" placeholder="e.g. Watson's, SM Beauty, Mercury Drug"/></div>
+      <div class="form-group"><label>Authentic Indicators (comma-separated)</label><textarea id="brand-indicators" placeholder="e.g. Galderma logo on packaging, Lot number on bottom"></textarea></div>
+      <div class="form-group"><label>Counterfeit Warnings (comma-separated)</label><textarea id="brand-warnings" placeholder="e.g. Missing logo, Price too low, Blurry label"></textarea></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-outline" onclick="closeModal('modal-brand')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveBrand()">Save Brand</button>
+    </div>
+  </div>
+</div>
+
+<!-- Product Modal -->
+<div class="modal-overlay" id="modal-prod">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="prod-modal-title">Add Product</h3>
+      <button class="modal-close" onclick="closeModal('modal-prod')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="prod-id"/>
+      <div class="form-row">
+        <div class="form-group"><label>Product Name *</label><input type="text" id="prod-name" placeholder="e.g. Moisturizing Cream"/></div>
+        <div class="form-group"><label>Brand *</label><input type="text" id="prod-brand" placeholder="e.g. CeraVe"/></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Barcode</label><input type="text" id="prod-barcode" placeholder="e.g. 3017760000000"/></div>
+        <div class="form-group"><label>Category</label><input type="text" id="prod-cat" placeholder="e.g. Moisturizer"/></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Status</label>
+          <select id="prod-status">
+            <option value="authentic">✅ Authentic</option>
+            <option value="flagged">⚠️ Flagged</option>
+            <option value="counterfeit">❌ Counterfeit</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Safety Rating</label>
+          <select id="prod-safety">
+            <option value="safe">✅ Safe</option>
+            <option value="caution">⚠️ Caution</option>
+            <option value="avoid">❌ Avoid</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group"><label>Ingredients</label><textarea id="prod-ingredients" placeholder="Water, Glycerin, Ceramide NP, ..."></textarea></div>
+      <div class="form-group"><label>Notes</label><textarea id="prod-notes" placeholder="Additional notes about this product..."></textarea></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-outline" onclick="closeModal('modal-prod')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveProduct()">Save Product</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API = '';
+let curPage = 'dashboard';
+let ingFilter = '', prodFilter = '';
+
+// ── NAVIGATION ──────────────────────────────────────────────
+function navigate(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  document.querySelector(`[onclick="navigate('${page}')"]`).classList.add('active');
+  curPage = page;
+  const titles = { dashboard:'Dashboard', ingredients:'Ingredient Database', brands:'Brand Registry', products:'Product Authenticity Panel', validate:'Brand Validator' };
+  const subs   = { dashboard:'System overview and statistics', ingredients:'Manage ingredient safety database', brands:'Manage brand authenticity registry', products:'Manage product verification records', validate:'Check brand authenticity against registry' };
+  document.getElementById('page-title').textContent = titles[page];
+  document.getElementById('page-sub').textContent = subs[page];
+  document.querySelector('.btn-primary').textContent = page === 'validate' ? '🔍 Validate' : '＋ Add New';
+  if (page === 'dashboard') loadDashboard();
+  else if (page === 'ingredients') loadIngredients();
+  else if (page === 'brands') loadBrands();
+  else if (page === 'products') loadProducts();
+}
+
+function openAddModal() {
+  if (curPage === 'ingredients') openIngModal();
+  else if (curPage === 'brands') openBrandModal();
+  else if (curPage === 'products') openProdModal();
+  else if (curPage === 'validate') validateBrand();
+}
+
+// ── UTILS ───────────────────────────────────────────────────
+function toast(msg, duration = 2800) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), duration);
+}
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+function openModal(id)  { document.getElementById(id).classList.add('open'); }
+
+async function apiFetch(url, opts = {}) {
+  const res = await fetch(API + url, { headers: {'Content-Type':'application/json'}, ...opts });
+  if (!res.ok) { const e = await res.text(); throw new Error(e || 'Request failed'); }
+  if (res.status === 204) return null;
+  return res.json();
+}
+
+function ratingBadge(r) {
+  const map = { safe:'badge-safe', caution:'badge-caution', avoid:'badge-avoid', authentic:'badge-authentic', flagged:'badge-flagged', counterfeit:'badge-counterfeit' };
+  const label = { safe:'✅ Safe', caution:'⚠️ Caution', avoid:'❌ Avoid', authentic:'✅ Authentic', flagged:'⚠️ Flagged', counterfeit:'❌ Counterfeit' };
+  return `<span class="badge ${map[r]||''}">${label[r]||r}</span>`;
+}
+
+// ── DASHBOARD ───────────────────────────────────────────────
+async function loadDashboard() {
+  try {
+    const [ings, prods, brands] = await Promise.all([
+      apiFetch('/api/ingredients/stats'),
+      apiFetch('/api/products/stats'),
+      apiFetch('/api/brands'),
+    ]);
+    document.getElementById('ds-ingredients').textContent = ings.total;
+    document.getElementById('ds-brands').textContent = brands.length;
+    document.getElementById('ds-products').textContent = prods.total;
+    document.getElementById('ds-flagged').textContent = prods.flagged + prods.counterfeit;
+    document.getElementById('ds-safe').textContent = ings.safe;
+    document.getElementById('ds-caution').textContent = ings.caution;
+    document.getElementById('ds-avoid').textContent = ings.avoid;
+    document.getElementById('ds-authentic').textContent = prods.authentic;
+
+    document.getElementById('dash-brands-list').innerHTML = brands.map(b => `
+      <div class="brand-mini" style="padding:12px 20px">
+        <div>
+          <div style="font-weight:700;font-size:14px">${b.name}</div>
+          <div style="font-size:12px;color:var(--gray-400)">${b.country} · ${b.parentCompany} · ₱${b.priceMin}–₱${b.priceMax}</div>
+        </div>
+        <div style="font-size:11px;color:var(--gray-400);max-width:200px;text-align:right">${b.authorizedSellers?.split(',').slice(0,2).join(', ')}</div>
+      </div>`).join('');
+  } catch(e) { toast('⚠️ Could not load dashboard: ' + e.message); }
+}
+
+// ── INGREDIENTS ─────────────────────────────────────────────
+async function loadIngredients() {
+  const s = document.getElementById('ing-search').value;
+  const data = await apiFetch(`/api/ingredients?search=${encodeURIComponent(s)}&rating=${ingFilter}`);
+  const tbody = document.getElementById('ing-tbody');
+  if (!data.length) { tbody.innerHTML = `<tr><td colspan="6"><div class="empty"><div class="icon">🧪</div><p>No ingredients found</p></div></td></tr>`; return; }
+  tbody.innerHTML = data.map(i => `
+    <tr>
+      <td><strong>${i.name}</strong></td>
+      <td style="color:var(--gray-400);font-size:12px">${i.inciName||'—'}</td>
+      <td style="font-size:12px;max-width:200px">${i.function||'—'}</td>
+      <td>${ratingBadge(i.rating)}</td>
+      <td style="font-size:12px;color:var(--gray-600);max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${i.notes}">${i.notes||'—'}</td>
+      <td>
+        <button class="btn btn-outline btn-sm btn-icon" onclick="editIngredient(${i.id})" title="Edit">✏️</button>
+        <button class="btn btn-danger btn-sm btn-icon" onclick="deleteIngredient(${i.id})" title="Delete">🗑</button>
+      </td>
+    </tr>`).join('');
+}
+
+function setIngFilter(f, btn) {
+  ingFilter = f;
+  document.querySelectorAll('#page-ingredients .filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  loadIngredients();
+}
+
+function openIngModal(data = null) {
+  document.getElementById('ing-modal-title').textContent = data ? 'Edit Ingredient' : 'Add Ingredient';
+  document.getElementById('ing-id').value = data?.id ?? '';
+  document.getElementById('ing-name').value = data?.name ?? '';
+  document.getElementById('ing-inci').value = data?.inciName ?? '';
+  document.getElementById('ing-function').value = data?.function ?? '';
+  document.getElementById('ing-rating').value = data?.rating ?? 'safe';
+  document.getElementById('ing-notes').value = data?.notes ?? '';
+  openModal('modal-ing');
+}
+
+async function editIngredient(id) {
+  const data = await apiFetch('/api/ingredients/' + id);
+  openIngModal(data);
+}
+
+async function saveIngredient() {
+  const id = document.getElementById('ing-id').value;
+  const body = {
+    name: document.getElementById('ing-name').value,
+    inciName: document.getElementById('ing-inci').value,
+    function: document.getElementById('ing-function').value,
+    rating: document.getElementById('ing-rating').value,
+    notes: document.getElementById('ing-notes').value,
+  };
+  if (!body.name) { toast('⚠️ Name is required'); return; }
+  try {
+    if (id) await apiFetch('/api/ingredients/' + id, { method:'PUT', body:JSON.stringify(body) });
+    else await apiFetch('/api/ingredients', { method:'POST', body:JSON.stringify(body) });
+    closeModal('modal-ing');
+    toast(id ? '✅ Ingredient updated!' : '✅ Ingredient added!');
+    loadIngredients();
+  } catch(e) { toast('Error: ' + e.message); }
+}
+
+async function deleteIngredient(id) {
+  if (!confirm('Delete this ingredient?')) return;
+  await apiFetch('/api/ingredients/' + id, { method:'DELETE' });
+  toast('🗑 Ingredient deleted');
+  loadIngredients();
+}
+
+// ── BRANDS ──────────────────────────────────────────────────
+async function loadBrands() {
+  const s = document.getElementById('brand-search').value;
+  const data = await apiFetch('/api/brands?search=' + encodeURIComponent(s));
+  const tbody = document.getElementById('brand-tbody');
+  if (!data.length) { tbody.innerHTML = `<tr><td colspan="6"><div class="empty"><div class="icon">🏷️</div><p>No brands found</p></div></td></tr>`; return; }
+  tbody.innerHTML = data.map(b => `
+    <tr>
+      <td><strong>${b.name}</strong><div style="font-size:11px;color:var(--gray-400)">${b.parentCompany||''}</div></td>
+      <td>${b.country||'—'}</td>
+      <td style="font-size:12px">${b.phDistributor||'—'}</td>
+      <td style="font-size:12px">₱${b.priceMin}–₱${b.priceMax}</td>
+      <td style="font-size:11px;font-family:monospace;color:var(--blue)">${b.barcodePrefixes||'—'}</td>
+      <td>
+        <button class="btn btn-outline btn-sm btn-icon" onclick="editBrand(${b.id})" title="Edit">✏️</button>
+        <button class="btn btn-danger btn-sm btn-icon" onclick="deleteBrand(${b.id})" title="Delete">🗑</button>
+      </td>
+    </tr>`).join('');
+}
+
+function openBrandModal(data = null) {
+  document.getElementById('brand-modal-title').textContent = data ? 'Edit Brand' : 'Add Brand';
+  document.getElementById('brand-id').value = data?.id ?? '';
+  document.getElementById('brand-name').value = data?.name ?? '';
+  document.getElementById('brand-country').value = data?.country ?? '';
+  document.getElementById('brand-parent').value = data?.parentCompany ?? '';
+  document.getElementById('brand-dist').value = data?.phDistributor ?? '';
+  document.getElementById('brand-website').value = data?.officialWebsite ?? '';
+  document.getElementById('brand-bcformat').value = data?.batchCodeFormat ?? '';
+  document.getElementById('brand-bcregex').value = data?.batchCodeRegex ?? '';
+  document.getElementById('brand-prefixes').value = data?.barcodePrefixes ?? '';
+  document.getElementById('brand-pmin').value = data?.priceMin ?? '';
+  document.getElementById('brand-pmax').value = data?.priceMax ?? '';
+  document.getElementById('brand-sellers').value = data?.authorizedSellers ?? '';
+  document.getElementById('brand-indicators').value = data?.authenticIndicators ?? '';
+  document.getElementById('brand-warnings').value = data?.counterfeitWarnings ?? '';
+  openModal('modal-brand');
+}
+
+async function editBrand(id) {
+  const data = await apiFetch('/api/brands/' + id);
+  openBrandModal(data);
+}
+
+async function saveBrand() {
+  const id = document.getElementById('brand-id').value;
+  const body = {
+    name: document.getElementById('brand-name').value,
+    country: document.getElementById('brand-country').value,
+    parentCompany: document.getElementById('brand-parent').value,
+    phDistributor: document.getElementById('brand-dist').value,
+    officialWebsite: document.getElementById('brand-website').value,
+    batchCodeFormat: document.getElementById('brand-bcformat').value,
+    batchCodeRegex: document.getElementById('brand-bcregex').value,
+    barcodePrefixes: document.getElementById('brand-prefixes').value,
+    priceMin: parseInt(document.getElementById('brand-pmin').value)||0,
+    priceMax: parseInt(document.getElementById('brand-pmax').value)||0,
+    authorizedSellers: document.getElementById('brand-sellers').value,
+    authenticIndicators: document.getElementById('brand-indicators').value,
+    counterfeitWarnings: document.getElementById('brand-warnings').value,
+  };
+  if (!body.name) { toast('⚠️ Brand name is required'); return; }
+  try {
+    if (id) await apiFetch('/api/brands/' + id, { method:'PUT', body:JSON.stringify(body) });
+    else await apiFetch('/api/brands', { method:'POST', body:JSON.stringify(body) });
+    closeModal('modal-brand');
+    toast(id ? '✅ Brand updated!' : '✅ Brand added!');
+    loadBrands();
+  } catch(e) { toast('Error: ' + e.message); }
+}
+
+async function deleteBrand(id) {
+  if (!confirm('Delete this brand from registry?')) return;
+  await apiFetch('/api/brands/' + id, { method:'DELETE' });
+  toast('🗑 Brand deleted');
+  loadBrands();
+}
+
+// ── PRODUCTS ────────────────────────────────────────────────
+async function loadProducts() {
+  const s = document.getElementById('prod-search').value;
+  const data = await apiFetch(`/api/products?search=${encodeURIComponent(s)}&status=${prodFilter}`);
+  const tbody = document.getElementById('prod-tbody');
+  if (!data.length) { tbody.innerHTML = `<tr><td colspan="7"><div class="empty"><div class="icon">🧴</div><p>No products found</p></div></td></tr>`; return; }
+  tbody.innerHTML = data.map(p => `
+    <tr>
+      <td><strong>${p.name}</strong></td>
+      <td>${p.brand}</td>
+      <td style="font-family:monospace;font-size:12px;color:var(--blue)">${p.barcode||'—'}</td>
+      <td style="font-size:12px">${p.category||'—'}</td>
+      <td>${ratingBadge(p.safetyRating||'safe')}</td>
+      <td>${ratingBadge(p.status)}</td>
+      <td>
+        <button class="btn btn-outline btn-sm btn-icon" onclick="editProduct(${p.id})" title="Edit">✏️</button>
+        <button class="btn btn-danger btn-sm btn-icon" onclick="deleteProduct(${p.id})" title="Delete">🗑</button>
+      </td>
+    </tr>`).join('');
+}
+
+function setProdFilter(f, btn) {
+  prodFilter = f;
+  document.querySelectorAll('#page-products .filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  loadProducts();
+}
+
+function openProdModal(data = null) {
+  document.getElementById('prod-modal-title').textContent = data ? 'Edit Product' : 'Add Product';
+  document.getElementById('prod-id').value = data?.id ?? '';
+  document.getElementById('prod-name').value = data?.name ?? '';
+  document.getElementById('prod-brand').value = data?.brand ?? '';
+  document.getElementById('prod-barcode').value = data?.barcode ?? '';
+  document.getElementById('prod-cat').value = data?.category ?? '';
+  document.getElementById('prod-status').value = data?.status ?? 'authentic';
+  document.getElementById('prod-safety').value = data?.safetyRating ?? 'safe';
+  document.getElementById('prod-ingredients').value = data?.ingredients ?? '';
+  document.getElementById('prod-notes').value = data?.notes ?? '';
+  openModal('modal-prod');
+}
+
+async function editProduct(id) {
+  const data = await apiFetch('/api/products/' + id);
+  openProdModal(data);
+}
+
+async function saveProduct() {
+  const id = document.getElementById('prod-id').value;
+  const body = {
+    name: document.getElementById('prod-name').value,
+    brand: document.getElementById('prod-brand').value,
+    barcode: document.getElementById('prod-barcode').value,
+    category: document.getElementById('prod-cat').value,
+    status: document.getElementById('prod-status').value,
+    safetyRating: document.getElementById('prod-safety').value,
+    ingredients: document.getElementById('prod-ingredients').value,
+    notes: document.getElementById('prod-notes').value,
+  };
+  if (!body.name || !body.brand) { toast('⚠️ Name and brand are required'); return; }
+  try {
+    if (id) await apiFetch('/api/products/' + id, { method:'PUT', body:JSON.stringify(body) });
+    else await apiFetch('/api/products', { method:'POST', body:JSON.stringify(body) });
+    closeModal('modal-prod');
+    toast(id ? '✅ Product updated!' : '✅ Product added!');
+    loadProducts();
+  } catch(e) { toast('Error: ' + e.message); }
+}
+
+async function deleteProduct(id) {
+  if (!confirm('Delete this product?')) return;
+  await apiFetch('/api/products/' + id, { method:'DELETE' });
+  toast('🗑 Product deleted');
+  loadProducts();
+}
+
+// ── BRAND VALIDATOR ─────────────────────────────────────────
+async function validateBrand() {
+  const brand = document.getElementById('val-brand').value;
+  if (!brand) { toast('⚠️ Enter a brand name'); return; }
+  const batch = document.getElementById('val-batch').value;
+  const price = document.getElementById('val-price').value;
+  try {
+    const r = await apiFetch(`/api/brands/validate?brandName=${encodeURIComponent(brand)}&batchCode=${encodeURIComponent(batch)}&price=${encodeURIComponent(price)}`);
+    const box = document.getElementById('val-result');
+    if (!r.found) {
+      box.innerHTML = `<div class="validate-result"><p style="color:var(--yellow)">⚠️ Brand not found in registry — AI analysis only</p></div>`;
+      return;
+    }
+    box.innerHTML = `
+      <div class="validate-result">
+        <div style="margin-bottom:12px">
+          <strong style="font-size:15px">${r.brand.name}</strong>
+          <div style="font-size:12px;color:var(--gray-400);margin-top:2px">${r.brand.country} · ${r.brand.parentCompany} · ${r.brand.phDistributor}</div>
+        </div>
+        ${r.validationResults.map(v => `
+          <div class="check-row">
+            <span>${v.valid ? '✅':'⚠️'}</span>
+            <div><strong>${v.check}:</strong> ${v.message}</div>
+          </div>`).join('')}
+        <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--gray-200)">
+          <div style="font-size:12px;font-weight:700;color:var(--gray-600);margin-bottom:6px">AUTHORIZED SELLERS IN PH</div>
+          <div style="font-size:13px">${r.authorizedSellers.join(' · ')}</div>
+        </div>
+        <div style="margin-top:10px">
+          <div style="font-size:12px;font-weight:700;color:var(--green);margin-bottom:4px">✅ AUTHENTIC INDICATORS</div>
+          ${r.authenticIndicators.map(i => `<div style="font-size:12px;color:var(--gray-600)">• ${i.trim()}</div>`).join('')}
+        </div>
+        <div style="margin-top:10px">
+          <div style="font-size:12px;font-weight:700;color:var(--red);margin-bottom:4px">⚠️ COUNTERFEIT WARNINGS</div>
+          ${r.counterfeitWarnings.map(w => `<div style="font-size:12px;color:var(--gray-600)">• ${w.trim()}</div>`).join('')}
+        </div>
+      </div>`;
+  } catch(e) { toast('Error: ' + e.message); }
+}
+
+// Close modals on overlay click
+document.querySelectorAll('.modal-overlay').forEach(o => {
+  o.addEventListener('click', e => { if (e.target === o) o.classList.remove('open'); });
+});
+
+// Load dashboard on start
+loadDashboard();
+</script>
+</body>
+</html>
